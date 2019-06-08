@@ -7,6 +7,7 @@
 #define SS_PIN          D8         // Configurable, see typical pin layout above
 
 // LEDs config
+#define BLUE_LED D0
 #define WHITE_LED D1
 #define BUZZER D2
 
@@ -31,8 +32,12 @@ void setup() {
   //Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
 
   Serial.println("Configuring LEDs and the buzzer...");
-  pinMode(BUZZER, OUTPUT);
+  pinMode(BLUE_LED, OUTPUT);
   pinMode(WHITE_LED, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+  digitalWrite(BLUE_LED, PIN_ON);
+  digitalWrite(WHITE_LED, PIN_OFF);
+  digitalWrite(BUZZER, PIN_OFF);
   
   Serial.print("Connecting to ");
   Serial.print(ssid);
@@ -48,7 +53,6 @@ void setup() {
   Serial.println("Connection established!");
   Serial.print("IP:\t");
   Serial.println(WiFi.localIP());
-
 }
 
 void loop() {
@@ -65,9 +69,11 @@ void loop() {
   // Dump debug info about the card; PICC_HaltA() is automatically called
   mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
 
-  digitalWrite(BUZZER, PIN_ON);
+  digitalWrite(BLUE_LED, PIN_OFF);
   digitalWrite(WHITE_LED, PIN_ON);
+  digitalWrite(BUZZER, PIN_ON);
   delay(750);
   digitalWrite(BUZZER, PIN_OFF);
   digitalWrite(WHITE_LED, PIN_OFF);
+  digitalWrite(BLUE_LED, PIN_ON);
 }

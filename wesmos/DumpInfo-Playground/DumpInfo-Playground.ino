@@ -6,12 +6,19 @@
 #define RST_PIN         D3          // Configurable, see typical pin layout above
 #define SS_PIN          D8         // Configurable, see typical pin layout above
 
+// LEDs config
+#define WHITE_LED D1
+#define BUZZER D2
+
+#define PIN_ON HIGH
+#define PIN_OFF LOW
+
 // WiFi configuration
 
 // Replace WIFINAME with WiFi network name
 // Replace WIFIPWD with WiFi network password
-const char* ssid = "MEO-413120";
-const char* password = "27606f6f94";
+const char* ssid = "WIFINAME";
+const char* password = "WIFIPWD";
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance
 
@@ -21,8 +28,12 @@ void setup() {
   SPI.begin();      // Init SPI bus
   mfrc522.PCD_Init();   // Init MFRC522
   mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
-  Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
+  //Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
 
+  Serial.println("Configuring LEDs and the buzzer...");
+  pinMode(BUZZER, OUTPUT);
+  pinMode(WHITE_LED, OUTPUT);
+  
   Serial.print("Connecting to ");
   Serial.print(ssid);
   Serial.println("...");
@@ -37,6 +48,7 @@ void setup() {
   Serial.println("Connection established!");
   Serial.print("IP:\t");
   Serial.println(WiFi.localIP());
+
 }
 
 void loop() {
@@ -52,4 +64,10 @@ void loop() {
 
   // Dump debug info about the card; PICC_HaltA() is automatically called
   mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+
+  digitalWrite(BUZZER, PIN_ON);
+  digitalWrite(WHITE_LED, PIN_ON);
+  delay(750);
+  digitalWrite(BUZZER, PIN_OFF);
+  digitalWrite(WHITE_LED, PIN_OFF);
 }

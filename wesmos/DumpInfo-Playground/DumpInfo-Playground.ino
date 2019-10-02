@@ -2,6 +2,7 @@
 #include <MFRC522.h>
 
 #include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 
 #define RST_PIN         D3          // Configurable, see typical pin layout above
 #define SS_PIN          D8         // Configurable, see typical pin layout above
@@ -14,22 +15,29 @@
 #define PIN_ON HIGH
 #define PIN_OFF LOW
 
-// WiFi configuration
+// Golockserver config
+String SERVER_HOST = "SERVERIP";
+String SERVER_PORT = "SERVERPORT";
+
+// WiFi config
 
 // Replace WIFINAME with WiFi network name
 // Replace WIFIPWD with WiFi network password
-const char* ssid = "WIFINAME";
-const char* password = "WIFIPWD";
+const char* ssid = "WIFINETWORK";
+const char* password = "WIFIPASSWD";
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance
 
 void setup() {
   Serial.begin(115200);   // Initialize serial communications with the PC
-  while (!Serial);    // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
+  while (!Serial);  
+  Serial.println("Begin");
+  
+  
   SPI.begin();      // Init SPI bus
   mfrc522.PCD_Init();   // Init MFRC522
   mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
-  //Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
+  Serial.println(F("Scan a card to see UID and data blocks..."));
 
   Serial.println("Configuring LEDs and the buzzer...");
   pinMode(BLUE_LED, OUTPUT);
@@ -38,7 +46,8 @@ void setup() {
   digitalWrite(BLUE_LED, PIN_ON);
   digitalWrite(WHITE_LED, PIN_OFF);
   digitalWrite(BUZZER, PIN_OFF);
-  
+
+  WiFi.begin(ssid, password);
   Serial.print("Connecting to ");
   Serial.print(ssid);
   Serial.println("...");
@@ -52,7 +61,7 @@ void setup() {
   // Successful connection
   Serial.println("Connection established!");
   Serial.print("IP:\t");
-  Serial.println(WiFi.localIP());
+  //Serial.println(WiFi.localIP());
 }
 
 void loop() {
@@ -66,9 +75,29 @@ void loop() {
     return;
   }
 
-  // Dump debug info about the card; PICC_HaltA() is automatically called
-  mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+  // Convert card uid in hexadecimal to a string to use it in the validation
+  String cardUID = "";
+  byte letter;
+  for (byte i = 0; i < mfrc522.uid.size; i++) 
+  {
+     cardUID.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? "0" : ""));
+     cardUID.concat(String(mfrc522.uid.uidByte[i], HEX));
+  }
+  cardUID.toUpperCase();
 
+//  String validationURL = "http://" + SERVER_HOST + ":" + SERVER_PORT + "/validate/" + cardUID;
+  String validationURL = "http://" + SERVER_HOST + ":" + SERVER_PORT + "/validate/" + cardUID;
+
+  
+  // HTTP Client configuration
+  HTTPClient http;
+  http.begin(validationURL);
+  // make request
+  int httpCode = http.GET();
+  // end request
+  http.end();
+  
+  // Signals with LEDs
   digitalWrite(BLUE_LED, PIN_OFF);
   digitalWrite(WHITE_LED, PIN_ON);
   digitalWrite(BUZZER, PIN_ON);
